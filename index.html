@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arca Musarithmica — 웹 데모</title>
+<style>
+  :root {
+    --bg: #fafaf7; --surface: #ffffff; --ink: #1a1a1a; --muted: #6b6b6b;
+    --line: #e5e5e0; --accent: #8b5e3c; --warn: #c97a20; --ok: #3b7a3b; --err: #b33a3a;
+    --S: #c84a4a; --A: #d4a04a; --T: #3b8b8b; --B: #3a5fa3;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 0; font-family: -apple-system, "Segoe UI", "Noto Sans KR", Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.55; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 32px 24px 80px; }
+  header { border-bottom: 1px solid var(--line); padding-bottom: 20px; margin-bottom: 28px; }
+  h1 { margin: 0 0 6px; font-size: 26px; font-weight: 500; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); font-size: 14px; margin: 0; }
+  .sub em { color: var(--accent); font-style: italic; }
+  .input-row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  input[type=text] { flex: 1; min-width: 240px; padding: 11px 14px; font-size: 15px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font-family: inherit; }
+  input[type=text]:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  button { padding: 11px 18px; font-size: 14px; font-weight: 500; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); cursor: pointer; font-family: inherit; transition: background 0.12s; }
+  button:hover { background: #f0f0ec; }
+  button.primary { background: var(--accent); color: white; border-color: var(--accent); }
+  button.primary:hover { background: #6f4a2e; }
+  button.play { background: var(--ok); color: white; border-color: var(--ok); }
+  button.play:hover { background: #2f6530; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  select { padding: 11px 14px; font-size: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font-family: inherit; cursor: pointer; }
+  select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .presets { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 28px; }
+  .presets button { padding: 6px 12px; font-size: 12px; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 22px; margin-bottom: 18px; }
+  .meta-row { display: flex; gap: 22px; flex-wrap: wrap; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+  .meta-item { font-size: 13px; }
+  .meta-item b { font-weight: 500; color: var(--muted); display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+  .meta-item span { font-size: 15px; color: var(--ink); }
+  .cadence-pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; background: #e8f3e8; color: var(--ok); }
+  .cadence-pill.other { background: #eee; color: var(--muted); }
+  .legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend i { display: inline-block; width: 14px; height: 8px; border-radius: 2px; }
+  .rules { list-style: none; padding: 0; margin: 14px 0 0; }
+  .rules li { display: flex; align-items: center; gap: 10px; padding: 7px 10px; margin-bottom: 4px; border-radius: 6px; font-size: 13px; }
+  .rules li.ok { background: #f0f7f0; }
+  .rules li.warning { background: #fdf5eb; }
+  .rules li .status { display: inline-block; width: 50px; text-align: center; font-size: 11px; font-weight: 500; padding: 2px 0; border-radius: 3px; text-transform: uppercase; }
+  .rules li.ok .status { background: var(--ok); color: white; }
+  .rules li.warning .status { background: var(--warn); color: white; }
+  .rules li .name { font-family: monospace; font-size: 12px; color: var(--accent); min-width: 160px; }
+  .rules li .detail { color: var(--muted); font-size: 12px; }
+  h3 { font-size: 13px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 10px; }
+  footer { margin-top: 40px; font-size: 12px; color: var(--muted); text-align: center; }
+  footer a { color: var(--accent); }
+  svg { display: block; width: 100%; height: auto; }
+  .syllable { font-size: 13px; fill: var(--ink); font-family: inherit; }
+  .grid-label { font-size: 10px; fill: var(--muted); font-family: inherit; }
+  .warn-marker { font-size: 11px; fill: var(--warn); font-family: inherit; }
+  details { margin-top: 18px; font-size: 13px; }
+  details summary { cursor: pointer; color: var(--muted); padding: 6px 0; }
+  pre { background: #2d2d2d; color: #f0f0f0; padding: 14px; border-radius: 6px; overflow-x: auto; font-size: 11px; line-height: 1.45; margin: 8px 0 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Arca Musarithmica</h1>
+  <p class="sub">Athanasius Kircher 1650 — 텍스트를 4성부 합창으로 자동 작곡 <em>(브라우저 데모)</em></p>
+</header>
+<div class="input-row">
+  <input id="text-in" type="text" value="Cantate Domino" placeholder="라틴어·영어·한국어 어떤 구절이든 OK">
+  <button class="primary" onclick="generate()">생성</button>
+  <select id="timbre" title="17세기 음색 선택">
+    <option value="organ">⛪ 파이프 오르간</option>
+    <option value="choir">🎵 무반주 합창</option>
+    <option value="harpsichord">🎹 쳄발로</option>
+  </select>
+  <button class="play" id="play-btn" onclick="playback()">▶ 재생</button>
+</div>
+<div class="presets">
+  <span style="font-size:12px;color:var(--muted);align-self:center;margin-right:4px;">예시:</span>
+  <button onclick="preset('Amen')">Amen</button>
+  <button onclick="preset('Hello world')">Hello world</button>
+  <button onclick="preset('Ave Maria')">Ave Maria</button>
+  <button onclick="preset('Alleluia')">Alleluia</button>
+  <button onclick="preset('Cantate Domino')">Cantate Domino</button>
+  <button onclick="preset('Gloria in excelsis')">Gloria in excelsis</button>
+</div>
+<div class="panel">
+  <div class="meta-row" id="meta"></div>
+  <svg id="score" viewBox="0 0 860 340" preserveAspectRatio="xMidYMid meet"></svg>
+  <div class="legend">
+    <span><i style="background:var(--S)"></i>Soprano</span>
+    <span><i style="background:var(--A)"></i>Alto</span>
+    <span><i style="background:var(--T)"></i>Tenor</span>
+    <span><i style="background:var(--B)"></i>Bass</span>
+  </div>
+</div>
+<div class="panel">
+  <h3>Rule log · XAI 규칙 점검</h3>
+  <ul class="rules" id="rules"></ul>
+  <details>
+    <summary>JSON 로그 원본 보기</summary>
+    <pre id="json-out"></pre>
+  </details>
+</div>
+<footer>
+  Arca Musarithmica 브라우저 데모 · 순수 JS · 외부 의존성 0 ·
+  <a href="https://github.com/rosyrosys/arca-musarithmica" target="_blank">GitHub 저장소</a>
+</footer>
+</div>
+<script>
+const PINAX_I = {
+  T2a: { S:[5,3], A:[3,1], T:[1,5], B:[1,1] },
+  T3a: { S:[5,4,3], A:[3,2,1], T:[1,7,5], B:[1,5,1] },
+  T4a: { S:[3,5,4,3], A:[1,3,2,1], T:[5,1,7,5], B:[1,1,5,1] },
+  T5a: { S:[3,4,5,4,3], A:[1,2,3,2,1], T:[5,1,1,7,5], B:[1,4,1,5,1] },
+  T6a: { S:[5,5,4,3,2,1], A:[3,3,2,1,7,5], T:[1,1,7,5,5,3], B:[1,1,5,1,5,1] },
+  T7a: { S:[5,5,4,3,4,2,1], A:[3,2,1,1,2,7,5], T:[1,7,6,5,7,5,3], B:[1,5,4,3,5,5,1] },
+  T8a: { S:[3,5,4,3,5,4,2,1], A:[1,3,2,1,3,2,7,5], T:[5,1,7,5,1,7,5,3], B:[1,1,5,1,1,5,5,1] },
+};
+const VOICE_BASE = { S: 72, A: 65, T: 57, B: 48 };
+const SCALE = [0, 2, 4, 5, 7, 9, 11, 12];
+const RANGE = { S:[60,79], A:[55,74], T:[48,67], B:[40,60] };
+function countSyllables(text) {
+  const cleaned = text.replace(/[^a-zA-Z\uAC00-\uD7A3\u1100-\u11FF]/g, " ").toLowerCase();
+  let n = 0;
+  for (const word of cleaned.split(/\s+/).filter(Boolean)) {
+    const korean = (word.match(/[\uAC00-\uD7A3]/g) || []).length;
+    const latin = (word.replace(/[\uAC00-\uD7A3]/g,"").match(/[aeiouy]+/g) || []).length;
+    n += korean + Math.max(latin, word.replace(/[aeiouy\uAC00-\uD7A3]/g,"").length ? latin : 0);
+    if (korean === 0 && latin === 0 && word.length > 0) n += 1;
+  }
+  return Math.max(1, n);
+}
+function pickTablet(n) {
+  const key = `T${n}a`;
+  if (PINAX_I[key]) return [key, PINAX_I[key]];
+  const keys = Object.keys(PINAX_I);
+  const closest = keys.reduce((a,b) => Math.abs(parseInt(a.slice(1,-1))-n) < Math.abs(parseInt(b.slice(1,-1))-n) ? a : b);
+  return [closest, PINAX_I[closest]];
+}
+function convert(tablet) {
+  const out = {};
+  for (const v of ["S","A","T","B"]) {
+    out[v] = tablet[v].map(d => {
+      const semi = SCALE[(d-1) % 7] + 12 * Math.floor((d-1)/7);
+      return VOICE_BASE[v] + semi;
+    });
+  }
+  return out;
+}
+function checkRules(pitches) {
+  const log = [];
+  const n = pitches.S.length;
+  const range_warnings = [];
+  for (const v of ["S","A","T","B"]) {
+    const [lo, hi] = RANGE[v];
+    pitches[v].forEach((p, i) => { if (p < lo || p > hi) range_warnings.push({ voice: v, chord: i+1, pitch: p, lo, hi }); });
+  }
+  if (range_warnings.length) {
+    for (const w of range_warnings) log.push({ rule: "voice_range", status: "warning", detail: `성부 ${w.voice} 화음 ${w.chord}: ${w.pitch} (범위 ${w.lo}–${w.hi} 초과)` });
+  } else log.push({ rule: "voice_range", status: "ok", detail: "모든 성부가 음역 내" });
+  const voices = ["S","A","T","B"];
+  let p5 = 0, p8 = 0;
+  for (let i = 0; i < n-1; i++) {
+    for (let a = 0; a < 4; a++) for (let b = a+1; b < 4; b++) {
+      const i1 = pitches[voices[a]][i] - pitches[voices[b]][i];
+      const i2 = pitches[voices[a]][i+1] - pitches[voices[b]][i+1];
+      if (i1 === i2 && pitches[voices[a]][i] !== pitches[voices[a]][i+1]) {
+        if (((i1 % 12)+12) % 12 === 7) p5++;
+        if (((i1 % 12)+12) % 12 === 0) p8++;
+      }
+    }
+  }
+  log.push({ rule: "no_parallel_fifths", status: p5 === 0 ? "ok" : "warning", detail: `${p5}회 발견` });
+  log.push({ rule: "no_parallel_octaves", status: p8 === 0 ? "ok" : "warning", detail: `${p8}회 발견` });
+  let cross = 0;
+  for (let i = 0; i < n; i++) {
+    const s = pitches.S[i], a = pitches.A[i], t = pitches.T[i], b = pitches.B[i];
+    if (!(s >= a && a >= t && t >= b)) cross++;
+  }
+  log.push({ rule: "no_voice_crossing", status: cross === 0 ? "ok" : "warning", detail: `${cross}개 화음에서 교차` });
+  return log;
+}
+function cadence(pitches) {
+  const n = pitches.S.length;
+  if (n < 2) return { type: "OTHER", detail: "너무 짧음" };
+  const bLast = ((pitches.B[n-1] % 12) + 12) % 12;
+  const bPrev = ((pitches.B[n-2] % 12) + 12) % 12;
+  const sLast = ((pitches.S[n-1] % 12) + 12) % 12;
+  if (bPrev === 7 && bLast === 0) return sLast === 0 ? { type: "PAC", detail: "정격 완전 종지 (V→I, 소프라노=으뜸음)" } : { type: "IAC", detail: "정격 불완전 종지 (V→I)" };
+  if (bLast === 7) return { type: "HC", detail: "반종지 (→V)" };
+  if (bPrev === 5 && bLast === 0) return { type: "PC", detail: "변격 종지 (IV→I)" };
+  return { type: "OTHER", detail: "분류 불가" };
+}
+function splitSyllables(text, n) {
+  const hangul = text.match(/[\uAC00-\uD7A3]/g);
+  if (hangul && hangul.length === n) return hangul;
+  const words = text.match(/[A-Za-z]+/g) || [text];
+  const out = [];
+  for (const w of words) {
+    const parts = w.match(/[^aeiouy]*[aeiouy]+(?:[^aeiouy]*$|[^aeiouy](?=[^aeiouy]))?/gi) || [w];
+    out.push(...parts);
+  }
+  while (out.length < n) out.push("·");
+  return out.slice(0, n);
+}
+let CURRENT = null;
+function generate() {
+  const text = document.getElementById("text-in").value.trim() || "Hello";
+  const n = countSyllables(text);
+  const [key, tablet] = pickTablet(n);
+  const pitches = convert(tablet);
+  const rules = checkRules(pitches);
+  const cad = cadence(pitches);
+  const sylls = splitSyllables(text, pitches.S.length);
+  const result = { text, n, tablet: key, mode: "C-ionian", pitches, rules, cadence: cad, syllables: sylls };
+  CURRENT = result;
+  renderMeta(result); renderScore(result); renderRules(result);
+  document.getElementById("json-out").textContent = JSON.stringify(result, null, 2);
+}
+function renderMeta(r) {
+  const cadClass = r.cadence.type === "OTHER" ? "cadence-pill other" : "cadence-pill";
+  document.getElementById("meta").innerHTML = `
+    <div class="meta-item"><b>입력 텍스트</b><span>"${escapeHtml(r.text)}"</span></div>
+    <div class="meta-item"><b>음절 수</b><span>${r.n}</span></div>
+    <div class="meta-item"><b>선택 Tablet</b><span style="font-family:monospace">${r.tablet}</span></div>
+    <div class="meta-item"><b>모드</b><span>${r.mode}</span></div>
+    <div class="meta-item"><b>종지</b><span class="${cadClass}">${r.cadence.type}</span><div style="font-size:11px;color:var(--muted);margin-top:2px">${r.cadence.detail}</div></div>`;
+}
+function renderScore(r) {
+  const svg = document.getElementById("score");
+  const left = 60, right = 820, top = 60, bottom = 260;
+  const n = r.pitches.S.length;
+  const colW = (right - left) / n;
+  const allP = [...r.pitches.S, ...r.pitches.A, ...r.pitches.T, ...r.pitches.B];
+  const minP = Math.min(...allP) - 3;
+  const maxP = Math.max(...allP) + 3;
+  const pitchToY = p => bottom - (p - minP) / (maxP - minP) * (bottom - top);
+  let html = "";
+  for (const ref of [48, 60, 72, 84]) {
+    if (ref >= minP && ref <= maxP) {
+      const y = pitchToY(ref);
+      const label = "C" + (ref/12 - 1);
+      html += `<line x1="${left}" y1="${y}" x2="${right}" y2="${y}" stroke="var(--line)" stroke-width="0.6" stroke-dasharray="2 4"/>`;
+      html += `<text x="${left-8}" y="${y+3}" class="grid-label" text-anchor="end">${label}</text>`;
+    }
+  }
+  for (let i = 1; i < n; i++) {
+    const x = left + i * colW;
+    html += `<line x1="${x}" y1="${top}" x2="${x}" y2="${bottom}" stroke="var(--line)" stroke-width="0.5"/>`;
+  }
+  const voiceColor = { S: "var(--S)", A: "var(--A)", T: "var(--T)", B: "var(--B)" };
+  for (const v of ["S","A","T","B"]) {
+    r.pitches[v].forEach((p, i) => {
+      const x = left + i * colW + 6;
+      const w = colW - 12;
+      const y = pitchToY(p) - 4;
+      html += `<rect x="${x}" y="${y}" width="${w}" height="8" rx="3" fill="${voiceColor[v]}"/>`;
+    });
+  }
+  for (const rule of r.rules) {
+    if (rule.rule === "voice_range" && rule.status === "warning") {
+      const m = rule.detail.match(/성부 (\w) 화음 (\d+): (\d+)/);
+      if (m) {
+        const i = parseInt(m[2])-1, p = parseInt(m[3]);
+        const x = left + i * colW;
+        const y = pitchToY(p);
+        html += `<rect x="${x+4}" y="${y-6}" width="${colW-8}" height="12" rx="3" fill="none" stroke="var(--warn)" stroke-width="1" stroke-dasharray="3 2"/>`;
+      }
+    }
+  }
+  r.syllables.forEach((syl, i) => {
+    const cx = left + i * colW + colW/2;
+    html += `<text x="${cx}" y="${bottom + 22}" class="syllable" text-anchor="middle">${escapeHtml(syl)}</text>`;
+  });
+  if (r.cadence.type !== "OTHER") {
+    const lastX = left + (n-1) * colW + colW/2;
+    const color = r.cadence.type === "PAC" ? "var(--ok)" : "var(--accent)";
+    html += `<rect x="${lastX-28}" y="${bottom + 34}" width="56" height="20" rx="10" fill="${color}"/>`;
+    html += `<text x="${lastX}" y="${bottom + 48}" text-anchor="middle" style="font-size:11px;fill:white;font-weight:500">${r.cadence.type}</text>`;
+  }
+  svg.innerHTML = html;
+}
+function renderRules(r) {
+  const ul = document.getElementById("rules");
+  ul.innerHTML = r.rules.map(rule => `<li class="${rule.status}"><span class="status">${rule.status}</span><span class="name">${rule.rule}</span><span class="detail">${rule.detail}</span></li>`).join("");
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+function preset(t) { document.getElementById("text-in").value = t; generate(); }
+let audioCtx = null;
+let reverbNode = null;
+function buildReverb(ctx, seconds = 2.8, decay = 3.5) {
+  const rate = ctx.sampleRate;
+  const length = Math.floor(rate * seconds);
+  const ir = ctx.createBuffer(2, length, rate);
+  for (let ch = 0; ch < 2; ch++) {
+    const data = ir.getChannelData(ch);
+    for (let i = 0; i < length; i++) {
+      const env = Math.pow(1 - i / length, decay);
+      data[i] = (Math.random() * 2 - 1) * env;
+    }
+  }
+  const conv = ctx.createConvolver();
+  conv.buffer = ir;
+  return conv;
+}
+function playOrganNote(ctx, freq, t0, dur, out) {
+  const stops = [
+    { mult: 1, gain: 0.22, type: "sine" },
+    { mult: 2, gain: 0.11, type: "sine" },
+    { mult: 3, gain: 0.04, type: "sine" },
+    { mult: 4, gain: 0.05, type: "sine" },
+    { mult: 1, gain: 0.03, type: "triangle" },
+  ];
+  const master = ctx.createGain();
+  master.gain.setValueAtTime(0, t0);
+  master.gain.linearRampToValueAtTime(1, t0 + 0.04);
+  master.gain.setValueAtTime(1, t0 + dur - 0.12);
+  master.gain.linearRampToValueAtTime(0, t0 + dur + 0.05);
+  master.connect(out);
+  for (const s of stops) {
+    const osc = ctx.createOscillator();
+    osc.type = s.type;
+    osc.frequency.value = freq * s.mult;
+    const g = ctx.createGain();
+    g.gain.value = s.gain;
+    osc.connect(g); g.connect(master);
+    osc.start(t0); osc.stop(t0 + dur + 0.1);
+  }
+}
+function playChoirNote(ctx, freq, t0, dur, out) {
+  const osc1 = ctx.createOscillator();
+  const osc2 = ctx.createOscillator();
+  osc1.type = "sawtooth"; osc2.type = "sawtooth";
+  osc1.frequency.value = freq; osc2.frequency.value = freq;
+  osc2.detune.value = 7;
+  const vib = ctx.createOscillator();
+  const vibGain = ctx.createGain();
+  vib.frequency.value = 5.5; vibGain.gain.value = 0;
+  vib.connect(vibGain); vibGain.connect(osc1.detune); vibGain.connect(osc2.detune);
+  const f1 = ctx.createBiquadFilter();
+  f1.type = "bandpass"; f1.frequency.value = 730; f1.Q.value = 4;
+  const f2 = ctx.createBiquadFilter();
+  f2.type = "bandpass"; f2.frequency.value = 1090; f2.Q.value = 6;
+  const mix = ctx.createGain(); mix.gain.value = 2.5;
+  const env = ctx.createGain();
+  env.gain.setValueAtTime(0, t0);
+  env.gain.linearRampToValueAtTime(0.14, t0 + 0.12);
+  env.gain.linearRampToValueAtTime(0.12, t0 + dur - 0.2);
+  env.gain.linearRampToValueAtTime(0, t0 + dur);
+  osc1.connect(f1); osc1.connect(f2); osc2.connect(f1); osc2.connect(f2);
+  f1.connect(mix); f2.connect(mix); mix.connect(env); env.connect(out);
+  vibGain.gain.setValueAtTime(0, t0);
+  vibGain.gain.linearRampToValueAtTime(6, t0 + 0.5);
+  osc1.start(t0); osc2.start(t0); vib.start(t0);
+  osc1.stop(t0 + dur + 0.05); osc2.stop(t0 + dur + 0.05); vib.stop(t0 + dur + 0.05);
+}
+function playHarpsichordNote(ctx, freq, t0, dur, out) {
+  const osc1 = ctx.createOscillator();
+  const osc2 = ctx.createOscillator();
+  osc1.type = "sawtooth"; osc2.type = "square";
+  osc1.frequency.value = freq; osc2.frequency.value = freq * 2;
+  const hp = ctx.createBiquadFilter();
+  hp.type = "highpass"; hp.frequency.value = 180;
+  const lp = ctx.createBiquadFilter();
+  lp.type = "lowpass"; lp.frequency.value = 3500;
+  const env = ctx.createGain();
+  env.gain.setValueAtTime(0, t0);
+  env.gain.linearRampToValueAtTime(0.22, t0 + 0.003);
+  env.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  const osc2Gain = ctx.createGain(); osc2Gain.gain.value = 0.3;
+  osc1.connect(hp); osc2.connect(osc2Gain); osc2Gain.connect(hp);
+  hp.connect(lp); lp.connect(env); env.connect(out);
+  osc1.start(t0); osc2.start(t0);
+  osc1.stop(t0 + dur); osc2.stop(t0 + dur);
+}
+function playback() {
+  if (!CURRENT) return;
+  if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); reverbNode = buildReverb(audioCtx, 2.8, 3.5); }
+  const ctx = audioCtx;
+  const timbre = document.getElementById("timbre").value;
+  const btn = document.getElementById("play-btn");
+  btn.disabled = true; btn.textContent = "▶ 재생 중…";
+  const dryGain = ctx.createGain(); const wetGain = ctx.createGain();
+  if (timbre === "organ") { dryGain.gain.value = 0.55; wetGain.gain.value = 0.45; }
+  else if (timbre === "choir") { dryGain.gain.value = 0.6; wetGain.gain.value = 0.4; }
+  else { dryGain.gain.value = 0.85; wetGain.gain.value = 0.15; }
+  const bus = ctx.createGain();
+  bus.connect(dryGain); dryGain.connect(ctx.destination);
+  bus.connect(reverbNode); reverbNode.connect(wetGain); wetGain.connect(ctx.destination);
+  const dur = timbre === "harpsichord" ? 0.55 : 0.85;
+  const n = CURRENT.pitches.S.length;
+  const voices = ["S","A","T","B"];
+  const voiceGain = { S: 1.0, A: 0.9, T: 0.95, B: 1.05 };
+  const player = timbre === "organ" ? playOrganNote : timbre === "choir" ? playChoirNote : playHarpsichordNote;
+  voices.forEach((v) => {
+    const voiceBus = ctx.createGain();
+    voiceBus.gain.value = voiceGain[v];
+    voiceBus.connect(bus);
+    CURRENT.pitches[v].forEach((midi, i) => {
+      const freq = 440 * Math.pow(2, (midi - 69) / 12);
+      const t0 = ctx.currentTime + 0.05 + i * dur;
+      player(ctx, freq, t0, dur, voiceBus);
+    });
+  });
+  setTimeout(() => { btn.disabled = false; btn.textContent = "▶ 재생"; }, n * dur * 1000 + 3200);
+}
+generate();
+</script>
+</body>
+</html>
