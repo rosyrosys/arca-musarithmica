@@ -2,6 +2,8 @@
 
 [![tests](https://github.com/rosyrosys/arca-musarithmica/actions/workflows/tests.yml/badge.svg)](https://github.com/rosyrosys/arca-musarithmica/actions/workflows/tests.yml)
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19710267.svg)](https://doi.org/10.5281/zenodo.19710267)
+
 A reference implementation of Athanasius Kircher's 1650 *Arca Musarithmica*
 (from *Musurgia Universalis*, Book VIII), operationalized as a five-step,
 rule-logged pipeline. This repository accompanies the paper
