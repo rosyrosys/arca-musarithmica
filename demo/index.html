@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Arca Musarithmica — Interactive Demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --paper: #fdfcf7;
+    --accent: #8b1a1a;
+    --muted: #666;
+    --rule-ok: #2e7d32;
+    --rule-warn: #b25a00;
+    --rule-info: #1565c0;
+    --grid: #d8d4c8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Georgia", "Times New Roman", serif;
+    background: var(--paper);
+    color: var(--ink);
+    margin: 0;
+    padding: 0 2rem 4rem;
+    line-height: 1.5;
+  }
+  header {
+    padding: 1.6rem 0 1rem;
+    border-bottom: 1px solid var(--grid);
+    margin-bottom: 1.6rem;
+  }
+  h1 {
+    font-size: 1.55rem;
+    margin: 0 0 0.3rem 0;
+    font-weight: 600;
+  }
+  .subtitle { color: var(--muted); font-size: 0.95rem; }
+  main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1.6rem;
+  }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  section {
+    border: 1px solid var(--grid);
+    border-radius: 6px;
+    padding: 1rem 1.1rem;
+    background: #fffefb;
+  }
+  section h2 {
+    margin: 0 0 0.7rem 0;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  input[type="text"], select {
+    width: 100%;
+    font: inherit;
+    font-size: 1rem;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid var(--grid);
+    border-radius: 4px;
+    background: var(--paper);
+  }
+  label { display:block; margin: 0.6rem 0 0.3rem; font-size: 0.85rem; color: var(--muted); }
+  .controls { display:flex; gap:0.6rem; flex-wrap:wrap; margin-top: 0.9rem; }
+  button {
+    font: inherit;
+    font-size: 0.92rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  button.secondary {
+    background: transparent;
+    color: var(--ink);
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+  .meta {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 0.6rem;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.25rem 0.9rem;
+  }
+  .meta b { color: var(--ink); font-weight: 600; }
+
+  /* Score */
+  .score-wrap { overflow-x: auto; padding: 0.4rem 0; }
+  svg.score { display: block; font-family: "Georgia", serif; }
+
+  /* Rule log */
+  .log {
+    font-family: "Menlo", "Consolas", monospace;
+    font-size: 0.82rem;
+    max-height: 420px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+  }
+  .log-stage {
+    margin-top: 0.7rem;
+    padding-top: 0.4rem;
+    border-top: 1px dashed var(--grid);
+  }
+  .log-stage:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+  .log-stage h3 {
+    font-family: "Georgia", serif;
+    font-size: 0.95rem;
+    margin: 0 0 0.35rem 0;
+    color: var(--accent);
+  }
+  .entry {
+    display: grid;
+    grid-template-columns: 3.5rem 1fr;
+    gap: 0.4rem;
+    padding: 0.18rem 0;
+  }
+  .entry .badge {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    padding: 0.08rem 0.35rem;
+    border-radius: 3px;
+    text-align: center;
+    align-self: start;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .badge.ok   { background:#e6f0e6; color:var(--rule-ok); }
+  .badge.warning  { background:#fbe8cd; color:var(--rule-warn); }
+  .badge.info { background:#e3efff; color:var(--rule-info); }
+  .badge.correction { background:#ffe5e5; color:#b22; }
+
+  .chord-grid {
+    font-family: "Menlo", "Consolas", monospace;
+    font-size: 0.82rem;
+    margin-top: 0.8rem;
+    border-collapse: collapse;
+    width: 100%;
+  }
+  .chord-grid th, .chord-grid td {
+    padding: 0.25rem 0.4rem;
+    border: 1px solid var(--grid);
+    text-align: center;
+  }
+  .chord-grid th { background: #f3efe4; }
+  .chord-grid td.active { background: #fff0a8; font-weight: 600; }
+
+  .downloads { margin-top: 0.8rem; font-size: 0.85rem; }
+  .downloads a { color: var(--accent); margin-right: 1rem; }
+
+  footer {
+    margin-top: 2rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    border-top: 1px solid var(--grid);
+    padding-top: 0.8rem;
+  }
+  .kircher-num {
+    display: inline-block;
+    min-width: 1.2em;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Arca Musarithmica — Interactive Demo</h1>
+  <div class="subtitle">
+    An explainable reconstruction of Athanasius Kircher's 1650 composition device.
+    Each step emits a rule-log entry — the XAI audit trail from text → four-voice music.
+  </div>
+</header>
+
+<main>
+  <section>
+    <h2>Input</h2>
+    <label>Text (Latin / English / Korean)</label>
+    <input id="text" type="text" value="Cantate Domino canticum novum" />
+
+    <label>Mode (Mensa line)</label>
+    <select id="mode">
+      <option value="F_major">Mensa I — F finalis (Kircher original, B natural)</option>
+      <option value="F_major_modern">Mensa I — F finalis (modern, B flat)</option>
+    </select>
+
+    <label>Tablet index (when multiple match)</label>
+    <select id="tablet-index">
+      <option value="0" selected>0 — first</option>
+      <option value="1">1 — second</option>
+      <option value="2">2 — third</option>
+    </select>
+
+    <label>Voice</label>
+    <select id="voice">
+      <option value="choir_ah" selected>Choir — "Ah" (formant synth)</option>
+      <option value="choir_oh">Choir — "Oh" (formant synth)</option>
+      <option value="choir_ee">Choir — "Ee" (formant synth)</option>
+      <option value="triangle">Triangle (instrumental)</option>
+    </select>
+
+    <label>Tempo: <span id="bpm-readout">48</span> BPM (seconds per chord: <span id="beat-readout">1.25</span>s)</label>
+    <input id="bpm" type="range" min="30" max="120" step="2" value="48" style="width:100%" />
+
+    <div class="controls">
+      <button id="run">Compose</button>
+      <button id="play" class="secondary">▶ Play</button>
+      <button id="stop" class="secondary">■ Stop</button>
+    </div>
+
+    <div class="meta" id="meta"></div>
+    <div class="downloads" id="downloads"></div>
+  </section>
+
+  <section>
+    <h2>Four-voice score</h2>
+    <div class="score-wrap"><svg id="score" class="score" width="560" height="260"></svg></div>
+    <table class="chord-grid" id="grid"></table>
+  </section>
+
+  <section style="grid-column: 1 / -1;">
+    <h2>Rule log (XAI trace)</h2>
+    <div class="log" id="log"></div>
+  </section>
+</main>
+
+<footer>
+  Reference reconstruction of Pinax I, Syntagma I from Kircher's <i>Musurgia Universalis</i> (Rome, 1650).
+  Zero-dependency, single-file HTML — runs directly from <code>file://</code>. See the paper for methodology.
+</footer>
+
+<script>
+/* ==========================================================================
+   Arca — JavaScript port of the Python engine (arca/).
+   Mirrors:  data.py (Mensa + Pinax + placement), constraints.py (checks),
+             engine.py (5-step pipeline), rulelog.py (structured log).
+   ========================================================================== */
+
+// ---------- Mensa Tonographica -----------------------------------------
+const MENSA = {
+  F_major: {
+    name: "Mensa Line I (F finalis)",
+    finalis: "F",
+    map: {1:"F", 2:"G", 3:"A", 4:"B", 5:"C", 6:"D", 7:"E", 8:"F"},
+  },
+  F_major_modern: {
+    name: "Mensa Line I (F finalis, modernized Bb)",
+    finalis: "F",
+    map: {1:"F", 2:"G", 3:"A", 4:"B-", 5:"C", 6:"D", 7:"E", 8:"F"},
+  },
+};
+
+// ---------- Pinax I, Syntagma I ----------------------------------------
+// Ported 1:1 from arca/data.py — voices = [Cantus, Altus, Tenor, Bassus].
+const PINAX = {
+  2: [
+    { id:"S1.P1.T2a", syllables:2, cadence:"IAC",
+      voices:[[5,3],[7,1],[2,5],[5,1]] },
+    { id:"S1.P1.T2b", syllables:2, cadence:"PAC",
+      voices:[[2,1],[7,3],[5,5],[5,1]] },
+    { id:"S1.P1.T2c", syllables:2, cadence:"IAC",
+      voices:[[5,5],[2,3],[7,1],[7,1]] },
+  ],
+  3: [
+    { id:"S1.P1.T3a", syllables:3, cadence:"PAC",
+      voices:[[1,2,1],[3,7,3],[5,5,5],[1,5,1]] },
+    { id:"S1.P1.T3b", syllables:3, cadence:"PAC",
+      voices:[[3,2,1],[5,7,3],[1,2,5],[1,5,1]] },
+  ],
+  4: [
+    { id:"S1.P1.T4.paper", syllables:4, cadence:"IAC",
+      voices:[[5,3,2,3],[3,5,7,5],[1,1,5,5],[1,1,5,1]] },
+    { id:"S1.P1.T4.pac",   syllables:4, cadence:"PAC",
+      voices:[[5,3,2,1],[3,5,7,3],[1,1,5,5],[1,1,5,1]] },
+  ],
+  5: [
+    { id:"S1.P1.T5a", syllables:5, cadence:"PAC",
+      voices:[[1,3,5,2,1],[3,5,1,7,3],[5,1,3,5,5],[1,1,1,5,1]] },
+    { id:"S1.P1.T5b", syllables:5, cadence:"IAC",
+      voices:[[5,3,2,2,3],[3,5,7,7,5],[1,1,5,5,1],[1,1,5,5,1]] },
+  ],
+  6: [
+    { id:"S1.P1.T6a", syllables:6, cadence:"PAC",
+      voices:[[1,3,5,3,2,1],[3,5,1,5,7,3],[5,1,3,1,5,5],[1,1,1,1,5,1]] },
+  ],
+};
+
+const VOICE_NAMES = ["Cantus","Altus","Tenor","Bassus"];
+const VOICE_RANGES = [[60,81],[53,74],[48,69],[40,62]];
+const VOICE_CENTERS = [72,65,57,48];
+
+// ---------- Pitch -> MIDI ---------------------------------------------
+const PC_BASE = {C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+function pitchToMidi(pitch, octave) {
+  const letter = pitch[0].toUpperCase();
+  let semi = PC_BASE[letter];
+  for (let i=1;i<pitch.length;i++) {
+    const c = pitch[i];
+    if (c==="#") semi += 1;
+    else if (c==="-" || c==="b") semi -= 1;
+  }
+  return 12*(octave+1) + semi;
+}
+
+// ---------- Syllable counting -----------------------------------------
+function countSyllables(text) {
+  let n = 0;
+  for (const raw of text.trim().split(/\s+/)) {
+    const tok = raw.replace(/[^\w\u3131-\u318E\uAC00-\uD7A3]/g, "");
+    if (!tok) continue;
+    let kor = 0;
+    for (const ch of tok) {
+      const cc = ch.charCodeAt(0);
+      if (cc >= 0xAC00 && cc <= 0xD7A3) kor++;
+    }
+    if (kor > 0) { n += kor; continue; }
+    // latin/english vowel-group fallback
+    const vowels = "aeiouyAEIOUY";
+    let c = 0, prev = false;
+    for (const ch of tok) {
+      const isV = vowels.includes(ch);
+      if (isV && !prev) c++;
+      prev = isV;
+    }
+    n += Math.max(1, c);
+  }
+  return n;
+}
+
+// ---------- Voice placement (port of place_chord + place_in_voice) ----
+function placeInVoice(pitch, v, preferUpper, upperBound, prevMidi) {
+  const [lo,hi] = VOICE_RANGES[v];
+  const target = prevMidi != null ? prevMidi
+               : VOICE_CENTERS[v] + (preferUpper ? 7 : 0);
+  const t1=[], t2=[], t3=[];
+  for (let oct=0; oct<8; oct++) {
+    const m = pitchToMidi(pitch, oct);
+    const d = Math.abs(m - target);
+    const inR = m>=lo && m<=hi;
+    const ub  = upperBound == null || m <= upperBound;
+    if (inR && ub) t1.push([d,m]);
+    else if (inR) t2.push([d,m]);
+    else t3.push([d,m]);
+  }
+  const pick = (arr)=>arr.sort((a,b)=>a[0]-b[0])[0][1];
+  if (t1.length) return pick(t1);
+  if (t2.length) return pick(t2);
+  return t3.length ? pick(t3) : pitchToMidi(pitch,4);
+}
+function placeChord(pitches, preferUppers, prevChord) {
+  const midis = [];
+  let ub = null;
+  for (let v=0; v<4; v++) {
+    const u = ub==null ? null : ub-1;
+    const p = prevChord ? prevChord[v] : null;
+    const m = placeInVoice(pitches[v], v, preferUppers[v], u, p);
+    midis.push(m);
+    ub = m;
+  }
+  return midis;
+}
+
+// ---------- Rule log ---------------------------------------------------
+class RuleLog {
+  constructor() { this.entries = []; }
+  add(stage, rule, message, data={}, status="ok") {
+    this.entries.push({stage, rule, message, data, status});
+  }
+  coverage() {
+    const cov = {selection:0, conversion:0, constraint_check:0, cadential_template:0, output:0};
+    for (const e of this.entries) cov[e.stage] = (cov[e.stage]||0)+1;
+    return cov;
+  }
+}
+
+// ---------- Constraint checks (port of constraints.py) ----------------
+function intervalClass(a,b) { return Math.abs(a-b) % 12; }
+function checkParallels(grid, log) {
+  const n = grid[0].length;
+  let found = false;
+  for (let i=0;i<4;i++) for (let j=i+1;j<4;j++) for (let k=0;k<n-1;k++) {
+    const aNow=grid[i][k], aNext=grid[i][k+1];
+    const bNow=grid[j][k], bNext=grid[j][k+1];
+    if (aNow===aNext && bNow===bNext) continue;
+    const ivN = intervalClass(aNow, bNow);
+    const ivX = intervalClass(aNext, bNext);
+    const moved = aNow!==aNext && bNow!==bNext;
+    if (moved && ivN===ivX) {
+      if (ivN===7) {
+        found = true;
+        log.add("constraint_check","no_parallel_fifths",
+          `Parallel perfect 5th between ${VOICE_NAMES[i]} and ${VOICE_NAMES[j]} at chord ${k} -> ${k+1}.`,
+          {voices:[VOICE_NAMES[i],VOICE_NAMES[j]], chord_from:k, chord_to:k+1, interval:"P5"},
+          "warning");
+      } else if (ivN===0 && aNow !== bNow) {
+        found = true;
+        log.add("constraint_check","no_parallel_octaves",
+          `Parallel perfect octave between ${VOICE_NAMES[i]} and ${VOICE_NAMES[j]} at chord ${k} -> ${k+1}.`,
+          {voices:[VOICE_NAMES[i],VOICE_NAMES[j]], chord_from:k, chord_to:k+1, interval:"P8"},
+          "warning");
+      }
+    }
+  }
+  if (!found)
+    log.add("constraint_check","no_parallel_fifths_or_octaves",
+      "No parallel perfect 5ths or 8ves detected across any voice pair.",{}, "ok");
+}
+function checkCrossing(grid, log) {
+  const n = grid[0].length;
+  let bad = false;
+  for (let k=0;k<n;k++) {
+    const ps = [grid[0][k],grid[1][k],grid[2][k],grid[3][k]];
+    for (let i=0;i<3;i++) if (ps[i] < ps[i+1]) {
+      bad = true;
+      log.add("constraint_check","no_voice_crossing",
+        `${VOICE_NAMES[i]} (${ps[i]}) is below ${VOICE_NAMES[i+1]} (${ps[i+1]}) at chord ${k}.`,
+        {chord:k, upper_voice:VOICE_NAMES[i], lower_voice:VOICE_NAMES[i+1],
+         upper_midi:ps[i], lower_midi:ps[i+1]},
+        "warning");
+    }
+  }
+  if (!bad)
+    log.add("constraint_check","no_voice_crossing",
+      "Voice order preserved: Cantus > Altus > Tenor > Bassus at every chord.",{}, "ok");
+}
+function checkRange(grid, log) {
+  let bad = 0;
+  for (let v=0;v<4;v++) {
+    const [lo,hi] = VOICE_RANGES[v];
+    for (let k=0;k<grid[v].length;k++) {
+      const p = grid[v][k];
+      if (p < lo || p > hi) {
+        bad++;
+        log.add("constraint_check","voice_range",
+          `${VOICE_NAMES[v]} pitch MIDI ${p} at chord ${k} is outside [${lo}, ${hi}].`,
+          {voice:VOICE_NAMES[v], chord:k, midi:p, lo, hi}, "warning");
+      }
+    }
+  }
+  if (bad === 0)
+    log.add("constraint_check","voice_range",
+      "All four voices stay within their conventional SATB ranges.",{}, "ok");
+}
+
+// ---------- Cadence detection -----------------------------------------
+function detectCadence(grid, mensa, target, log) {
+  if (grid[0].length < 2) {
+    log.add("cadential_template","cadence_detection",
+      "Tablet has < 2 chords; cadence detection skipped.",{}, "info");
+    return "NONE";
+  }
+  const finalis = pitchToMidi(mensa.finalis, 4) % 12;
+  const dominant = (finalis + 7) % 12;
+  const bassFrom = grid[3][grid[3].length-2] % 12;
+  const bassTo   = grid[3][grid[3].length-1] % 12;
+  const cantusPc = grid[0][grid[0].length-1] % 12;
+
+  let label="OTHER", reason="No standard cadence pattern detected in the bass.";
+  if (bassFrom === dominant && bassTo === finalis) {
+    if (cantusPc === finalis) {
+      label="PAC"; reason="Bass V -> I and Cantus lands on the finalis — perfect authentic cadence.";
+    } else {
+      label="IAC"; reason="Bass V -> I but Cantus does not land on the finalis — imperfect authentic cadence.";
+    }
+  } else if (bassTo === dominant) {
+    label="HC"; reason="Final chord is a dominant — half cadence.";
+  } else if (bassFrom === (finalis + 5) % 12 && bassTo === finalis) {
+    label="PC"; reason="Bass IV -> I — plagal cadence.";
+  } else if (bassFrom === dominant && bassTo !== finalis) {
+    label="DC"; reason="Bass V -> (something other than I) — deceptive cadence.";
+  }
+  let status = "ok";
+  if (target && target !== label) {
+    status = "warning";
+    reason += ` (Expected ${target}, detected ${label}.)`;
+  }
+  log.add("cadential_template","cadence_detection", reason,
+    {detected:label, expected:target||null,
+     bass_progression_pc:[bassFrom,bassTo], cantus_final_pc:cantusPc,
+     finalis_pc:finalis, dominant_pc:dominant}, status);
+  return label;
+}
+
+// ---------- The 5-step pipeline ---------------------------------------
+function compose(text, modeKey, tabletIndex) {
+  const log = new RuleLog();
+  const mensa = MENSA[modeKey];
+
+  // Step 1 — SELECTION
+  const syll = countSyllables(text);
+  log.add("selection","syllable_count",
+    `Counted ${syll} syllable(s) in the input text.`, {text, syllables:syll});
+
+  const available = Object.keys(PINAX).map(Number).sort((a,b)=>a-b);
+  let chosenN;
+  if (PINAX[syll]) {
+    chosenN = syll;
+    log.add("selection","tablet_family_selection",
+      `Exact tablet family found for ${syll} syllables.`,
+      {chosen_syllable_count:chosenN, available});
+  } else {
+    const lower = available.filter(n=>n<syll);
+    const upper = available.filter(n=>n>syll);
+    if (lower.length) {
+      chosenN = Math.max(...lower);
+      log.add("selection","tablet_family_selection",
+        `No exact ${syll}-syllable tablet; falling back to ${chosenN}-syllable family (closest lower).`,
+        {requested_syllables:syll, chosen_syllable_count:chosenN, available}, "info");
+    } else {
+      chosenN = Math.min(...upper);
+      log.add("selection","tablet_family_selection",
+        `No ${syll}-syllable tablet; falling back to ${chosenN}-syllable family (closest higher).`,
+        {requested_syllables:syll, chosen_syllable_count:chosenN, available}, "info");
+    }
+  }
+  const candidates = PINAX[chosenN];
+  const idx = Math.min(tabletIndex, candidates.length-1);
+  const tablet = candidates[idx];
+  log.add("selection","tablet_choice",
+    `Selected tablet '${tablet.id}' (index ${idx} of ${candidates.length}; cadence target = ${tablet.cadence}).`,
+    {tablet_id:tablet.id, tablet_index:idx,
+     tablet_count_in_family:candidates.length,
+     declared_cadence:tablet.cadence});
+
+  // Step 2 — CONVERSION
+  log.add("conversion","mensa_line_selected",
+    `Using Mensa line '${mensa.name}' (finalis=${mensa.finalis}). Numbers 1 and 8 both resolve to the finalis (Pythagorean 1:2 octave ratio).`,
+    {mensa_name:mensa.name, finalis:mensa.finalis, degree_map:mensa.map});
+
+  const n = tablet.voices[0].length;
+  const pitchGrid = [[],[],[],[]];
+  for (let v=0;v<4;v++) for (let k=0;k<n;k++)
+    pitchGrid[v].push(mensa.map[tablet.voices[v][k]]);
+
+  const midiGrid = [[],[],[],[]];
+  let prev = null;
+  for (let k=0;k<n;k++) {
+    const pitches = [pitchGrid[0][k],pitchGrid[1][k],pitchGrid[2][k],pitchGrid[3][k]];
+    const prefer = [0,1,2,3].map(v=>tablet.voices[v][k]===8);
+    const chord = placeChord(pitches, prefer, prev);
+    for (let v=0;v<4;v++) midiGrid[v].push(chord[v]);
+    prev = chord;
+  }
+  for (let k=0;k<n;k++) {
+    const nums = [0,1,2,3].map(v=>tablet.voices[v][k]);
+    const pcs  = [0,1,2,3].map(v=>pitchGrid[v][k]);
+    const mds  = [0,1,2,3].map(v=>midiGrid[v][k]);
+    log.add("conversion","number_to_pitch",
+      `Chord ${k+1}: Kircher numbers [${nums.join(", ")}] -> pitches [${pcs.join(", ")}] (MIDI [${mds.join(", ")}]).`,
+      {chord_index:k, numbers:nums, pitches:pcs, midi:mds});
+  }
+
+  // Step 3 — CONSTRAINT CHECK
+  checkParallels(midiGrid, log);
+  checkCrossing(midiGrid, log);
+  checkRange(midiGrid, log);
+
+  // Step 4 — CADENCE
+  const cadence = detectCadence(midiGrid, mensa, tablet.cadence, log);
+
+  // Step 5 — OUTPUT
+  log.add("output","output_ready",
+    `Four-voice composition ready: ${n} chords across 4 voices, mode '${modeKey}', cadence ${cadence}.`,
+    {n_chords:n, mode:modeKey, cadence});
+
+  return {text, syllables:syll, tablet, mensa, pitchGrid, midiGrid,
+          cadenceDetected:cadence, ruleLog:log};
+}
+
+// ---------- Score SVG renderer ----------------------------------------
+function renderScore(result) {
+  const svg = document.getElementById("score");
+  const n = result.midiGrid[0].length;
+  const staffW = 420;
+  const leftMargin = 80;
+  const colW = Math.max(30, Math.floor(staffW / (n+1)));
+  const width = leftMargin + colW * (n+1) + 30;
+  const rowH = 48;
+  const yOf = (voice) => 24 + voice*rowH;
+  svg.setAttribute("width", width);
+  svg.setAttribute("height", rowH*4 + 40);
+  svg.innerHTML = "";
+
+  const ns = "http://www.w3.org/2000/svg";
+  function el(name, attrs, text) {
+    const e = document.createElementNS(ns, name);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  // Minimal "staff" bands + voice labels
+  for (let v=0; v<4; v++) {
+    const y = yOf(v);
+    // 5-line band
+    for (let i=0; i<5; i++) {
+      svg.appendChild(el("line", {
+        x1: leftMargin-6, y1: y-12+i*6, x2: width-10, y2: y-12+i*6,
+        stroke:"#333", "stroke-width":0.6
+      }));
+    }
+    svg.appendChild(el("text", {x:10, y:y+4, "font-size":13, fill:"#333"}, VOICE_NAMES[v]));
+    // Kircher-style numerals row header
+    svg.appendChild(el("text", {x:leftMargin-40, y:y+4, "font-size":10, fill:"#999"}, "№"));
+  }
+
+  // Draw notes: position by MIDI relative to the voice's center
+  for (let k=0; k<n; k++) {
+    const x = leftMargin + (k+1)*colW;
+    for (let v=0; v<4; v++) {
+      const m = result.midiGrid[v][k];
+      const centerMidi = VOICE_CENTERS[v];
+      const dy = (centerMidi - m) * 1.6;  // semitones -> px vertical
+      const cy = yOf(v) + dy;
+      // note head
+      svg.appendChild(el("ellipse",
+        {cx:x, cy:cy, rx:5.8, ry:4.4, fill:"#1a1a1a"}));
+      // pitch label
+      svg.appendChild(el("text",
+        {x:x, y:cy-8, "font-size":10, "text-anchor":"middle", fill:"#8b1a1a"},
+        result.pitchGrid[v][k]));
+      // Kircher number below staff for the Cantus row only
+      if (v===0) {
+        svg.appendChild(el("text",
+          {x:x, y:yOf(3)+40, "font-size":12, "text-anchor":"middle",
+           fill:"#444", "font-style":"italic"},
+          String(result.tablet.voices[0][k])));
+      }
+    }
+    // barline between chords
+    if (k < n-1) {
+      svg.appendChild(el("line", {
+        x1:x+colW/2, y1:yOf(0)-14, x2:x+colW/2, y2:yOf(3)+14,
+        stroke:"#bbb", "stroke-width":0.5
+      }));
+    }
+  }
+  // final barline
+  const xEnd = leftMargin + n*colW + 10;
+  svg.appendChild(el("line", {
+    x1:xEnd, y1:yOf(0)-14, x2:xEnd, y2:yOf(3)+14,
+    stroke:"#1a1a1a", "stroke-width":1.5
+  }));
+}
+
+// ---------- Rule log renderer ----------------------------------------
+function renderLog(result) {
+  const container = document.getElementById("log");
+  container.innerHTML = "";
+  const stageLabels = {
+    selection:          "STEP 1 — SELECTION",
+    conversion:         "STEP 2 — CONVERSION",
+    constraint_check:   "STEP 3 — CONSTRAINT CHECK",
+    cadential_template: "STEP 4 — CADENTIAL TEMPLATE",
+    output:             "STEP 5 — OUTPUT",
+  };
+  let currentStage = null;
+  let stageDiv = null;
+  for (const e of result.ruleLog.entries) {
+    if (e.stage !== currentStage) {
+      stageDiv = document.createElement("div");
+      stageDiv.className = "log-stage";
+      const h = document.createElement("h3");
+      h.textContent = stageLabels[e.stage] || e.stage;
+      stageDiv.appendChild(h);
+      container.appendChild(stageDiv);
+      currentStage = e.stage;
+    }
+    const row = document.createElement("div");
+    row.className = "entry";
+    const badge = document.createElement("span");
+    badge.className = "badge " + e.status;
+    badge.textContent = e.status;
+    row.appendChild(badge);
+    const msg = document.createElement("div");
+    msg.innerHTML = `<b>${e.rule}</b> — ${e.message}`;
+    row.appendChild(msg);
+    stageDiv.appendChild(row);
+  }
+}
+
+// ---------- Chord grid -----------------------------------------------
+function renderGrid(result) {
+  const tbl = document.getElementById("grid");
+  const n = result.midiGrid[0].length;
+  let html = "<thead><tr><th>Voice</th>";
+  for (let k=0;k<n;k++) html += `<th>chord ${k+1}</th>`;
+  html += "</tr></thead><tbody>";
+  for (let v=0; v<4; v++) {
+    html += `<tr><td><b>${VOICE_NAMES[v]}</b></td>`;
+    for (let k=0; k<n; k++) {
+      const num = result.tablet.voices[v][k];
+      const pc = result.pitchGrid[v][k];
+      const mi = result.midiGrid[v][k];
+      html += `<td data-chord="${k}"><span class="kircher-num">${num}</span> · ${pc} · ${mi}</td>`;
+    }
+    html += "</tr>";
+  }
+  html += "</tbody>";
+  tbl.innerHTML = html;
+}
+
+// ---------- Meta ------------------------------------------------------
+function renderMeta(result) {
+  const meta = document.getElementById("meta");
+  meta.innerHTML = `
+    <b>Syllables</b><span>${result.syllables}</span>
+    <b>Tablet</b><span>${result.tablet.id}</span>
+    <b>Declared cadence</b><span>${result.tablet.cadence}</span>
+    <b>Detected cadence</b><span>${result.cadenceDetected}</span>
+    <b>Mensa</b><span>${result.mensa.name}</span>
+  `;
+}
+
+// ---------- Web Audio playback ---------------------------------------
+let audioCtx = null;
+let playingTimers = [];
+function stopPlayback() {
+  for (const id of playingTimers) clearTimeout(id);
+  playingTimers = [];
+  if (audioCtx) {
+    audioCtx.close();
+    audioCtx = null;
+  }
+}
+// Approximate vowel formants (Hz) — male voice averages from Peterson & Barney.
+// Each entry is [F1, F2, F3] center frequencies; Q is shared.
+const VOWEL_FORMANTS = {
+  ah: [730, 1090, 2440],
+  oh: [570,  840, 2410],
+  ee: [270, 2290, 3010],
+};
+
+function scheduleEnvelope(gainNode, t0, durSec, gainVal) {
+  // Gentle ADSR so the note doesn't click on/off.
+  const attack  = Math.min(0.08, durSec * 0.15);
+  const release = Math.min(0.30, durSec * 0.30);
+  const sustainEnd = t0 + durSec - release;
+  gainNode.gain.setValueAtTime(0.0001, t0);
+  gainNode.gain.exponentialRampToValueAtTime(gainVal, t0 + attack);
+  gainNode.gain.exponentialRampToValueAtTime(gainVal * 0.75, sustainEnd);
+  gainNode.gain.exponentialRampToValueAtTime(0.0001, t0 + durSec);
+}
+
+function addVibrato(ctx, carrier, freq, t0, durSec) {
+  // Small 5 Hz LFO adds a vocal "warmth" — imperceptible individually
+  // but makes the stacked chord sound humanly imperfect.
+  const lfo = ctx.createOscillator();
+  const lfoGain = ctx.createGain();
+  lfo.frequency.value = 5.0;
+  lfoGain.gain.value = freq * 0.01;   // ±1% vibrato depth
+  lfo.connect(lfoGain);
+  lfoGain.connect(carrier.frequency);
+  lfo.start(t0);
+  lfo.stop(t0 + durSec + 0.1);
+}
+
+function beepChoir(ctx, midi, startSec, durSec, gainVal, vowel) {
+  // A voice-like tone: sawtooth glottal source -> three parallel bandpass
+  // filters tuned to vowel formants -> envelope. Zero samples, zero deps.
+  const t0 = ctx.currentTime + startSec;
+  const freq = 440 * Math.pow(2, (midi-69)/12);
+  const formants = VOWEL_FORMANTS[vowel] || VOWEL_FORMANTS.ah;
+
+  const src = ctx.createOscillator();
+  src.type = "sawtooth";
+  src.frequency.value = freq;
+  addVibrato(ctx, src, freq, t0, durSec);
+
+  // Low-pass to tame brightness before formant filtering
+  const preLp = ctx.createBiquadFilter();
+  preLp.type = "lowpass";
+  preLp.frequency.value = 4000;
+
+  const out = ctx.createGain();
+  scheduleEnvelope(out, t0, durSec, gainVal);
+
+  src.connect(preLp);
+  // Three parallel bandpass filters create the vowel "color"
+  const weights = [1.0, 0.6, 0.35];
+  formants.forEach((fc, i) => {
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = fc;
+    bp.Q.value = 8;
+    const g = ctx.createGain();
+    g.gain.value = weights[i];
+    preLp.connect(bp);
+    bp.connect(g);
+    g.connect(out);
+  });
+  out.connect(ctx.destination);
+
+  src.start(t0);
+  src.stop(t0 + durSec + 0.2);
+}
+
+function beepTriangle(ctx, midi, startSec, durSec, gainVal) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "triangle";
+  osc.frequency.value = 440 * Math.pow(2, (midi-69)/12);
+  const t0 = ctx.currentTime + startSec;
+  scheduleEnvelope(gain, t0, durSec, gainVal);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(t0);
+  osc.stop(t0 + durSec + 0.1);
+}
+
+function beep(ctx, midi, startSec, durSec, gainVal) {
+  const voice = document.getElementById("voice")?.value || "choir_ah";
+  if (voice === "triangle") {
+    beepTriangle(ctx, midi, startSec, durSec, gainVal);
+  } else {
+    // Formant-synth choir. Slight gain boost since bandpass sums thin it out.
+    const vowel = voice === "choir_oh" ? "oh"
+               : voice === "choir_ee" ? "ee"
+               : "ah";
+    beepChoir(ctx, midi, startSec, durSec, gainVal * 2.2, vowel);
+  }
+}
+function playResult(result) {
+  stopPlayback();
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const ctx = audioCtx;
+  // Tempo slider -> seconds per chord. 60 BPM ≈ 1.0s; default is 48 BPM
+  // (≈ 1.25s per chord) which reads as a dignified motet pace.
+  const bpm = parseInt(document.getElementById("bpm")?.value || "48", 10);
+  const beat = 60 / bpm;
+  const n = result.midiGrid[0].length;
+  for (let k=0; k<n; k++) {
+    for (let v=0; v<4; v++) {
+      // sustain each voice for 95% of the beat so chords ring into each other
+      beep(ctx, result.midiGrid[v][k], k*beat, beat*0.95, 0.08);
+    }
+    // highlight the active chord column in the grid
+    const idx = k;
+    const tid = setTimeout(() => {
+      document.querySelectorAll(".chord-grid td.active").forEach(e=>e.classList.remove("active"));
+      document.querySelectorAll(`.chord-grid td[data-chord="${idx}"]`).forEach(e=>e.classList.add("active"));
+    }, k*beat*1000);
+    playingTimers.push(tid);
+  }
+  const cleanup = setTimeout(() => {
+    document.querySelectorAll(".chord-grid td.active").forEach(e=>e.classList.remove("active"));
+  }, n*beat*1000 + 300);
+  playingTimers.push(cleanup);
+}
+
+// ---------- MIDI writer (browser) ------------------------------------
+// Minimal port of arca/output.py MidiWriter, enough for a download link.
+function writeVlq(n) {
+  const out = [n & 0x7F];
+  n >>= 7;
+  while (n > 0) { out.push((n & 0x7F) | 0x80); n >>= 7; }
+  return out.reverse();
+}
+function buildMidiBlob(result) {
+  const tpq = 480;
+  // Match the current playback tempo in the UI, so the downloaded MIDI sounds
+  // like what the user just heard. Fallback to 48 BPM if the slider is missing.
+  const tempoBpm = parseInt(document.getElementById("bpm")?.value || "48", 10);
+  const bytes = [];
+  const push = arr => { for (const b of arr) bytes.push(b & 0xFF); };
+
+  // Header
+  push([0x4D,0x54,0x68,0x64, 0,0,0,6, 0,1, 0,4, (tpq>>8)&0xFF, tpq&0xFF]);
+
+  for (let v=0; v<4; v++) {
+    const trk = [];
+    const pushT = arr => { for (const b of arr) trk.push(b & 0xFF); };
+    // Track name
+    const name = VOICE_NAMES[v];
+    pushT([0x00, 0xFF, 0x03, name.length]);
+    for (const ch of name) pushT([ch.charCodeAt(0)]);
+    // Tempo on track 0
+    if (v === 0) {
+      const uspq = Math.round(60000000 / tempoBpm);
+      pushT([0x00, 0xFF, 0x51, 0x03,
+             (uspq>>16)&0xFF, (uspq>>8)&0xFF, uspq&0xFF]);
+    }
+    // Events
+    const events = [];
+    const rhythm = result.tablet.rhythm || new Array(result.midiGrid[v].length).fill(1);
+    let t = 0;
+    for (let k=0; k<result.midiGrid[v].length; k++) {
+      const dur = Math.round(rhythm[k] * tpq);
+      const m = result.midiGrid[v][k];
+      events.push({tick:t, kind:1, data:[0x90|v, m, 80]});
+      events.push({tick:t+dur, kind:0, data:[0x80|v, m, 0]});
+      t += dur;
+    }
+    events.sort((a,b)=>a.tick-b.tick || a.kind-b.kind);
+    let last = 0;
+    for (const ev of events) {
+      const delta = ev.tick - last;
+      pushT(writeVlq(delta));
+      pushT(ev.data);
+      last = ev.tick;
+    }
+    // End of track
+    pushT([0x00, 0xFF, 0x2F, 0x00]);
+
+    // Track header
+    const len = trk.length;
+    push([0x4D,0x54,0x72,0x6B,
+          (len>>24)&0xFF,(len>>16)&0xFF,(len>>8)&0xFF,len&0xFF]);
+    push(trk);
+  }
+  return new Blob([new Uint8Array(bytes)], {type:"audio/midi"});
+}
+
+function renderDownloads(result) {
+  const el = document.getElementById("downloads");
+  // revoke old urls if any
+  if (window._arcaUrls) for (const u of window._arcaUrls) URL.revokeObjectURL(u);
+  window._arcaUrls = [];
+  const midiBlob = buildMidiBlob(result);
+  const midiUrl = URL.createObjectURL(midiBlob);
+  window._arcaUrls.push(midiUrl);
+
+  const jsonBlob = new Blob(
+    [JSON.stringify({entries:result.ruleLog.entries,
+                     coverage:result.ruleLog.coverage()}, null, 2)],
+    {type:"application/json"});
+  const jsonUrl = URL.createObjectURL(jsonBlob);
+  window._arcaUrls.push(jsonUrl);
+
+  el.innerHTML =
+    `<a href="${midiUrl}" download="arca.mid">⬇ MIDI</a>`
+  + `<a href="${jsonUrl}" download="arca-rulelog.json">⬇ Rule log (JSON)</a>`;
+}
+
+// ---------- Bindings --------------------------------------------------
+let lastResult = null;
+function run() {
+  const text = document.getElementById("text").value || "Cantate Domino";
+  const mode = document.getElementById("mode").value;
+  const ti   = parseInt(document.getElementById("tablet-index").value, 10) || 0;
+  const result = compose(text, mode, ti);
+  lastResult = result;
+  renderMeta(result);
+  renderScore(result);
+  renderGrid(result);
+  renderLog(result);
+  renderDownloads(result);
+}
+document.getElementById("run").addEventListener("click", run);
+document.getElementById("play").addEventListener("click", () => {
+  if (!lastResult) run();
+  if (lastResult) playResult(lastResult);
+});
+document.getElementById("stop").addEventListener("click", stopPlayback);
+document.getElementById("text").addEventListener("keydown", e => {
+  if (e.key === "Enter") run();
+});
+const bpmEl = document.getElementById("bpm");
+if (bpmEl) {
+  bpmEl.addEventListener("input", () => {
+    const bpm = parseInt(bpmEl.value, 10);
+    document.getElementById("bpm-readout").textContent = bpm;
+    document.getElementById("beat-readout").textContent = (60 / bpm).toFixed(2);
+  });
+}
+
+// Auto-run on load.
+run();
+</script>
+</body>
+</html>

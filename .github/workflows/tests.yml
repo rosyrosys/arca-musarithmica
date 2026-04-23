@@ -1,0 +1,46 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Zero-dep test suite on ${{ matrix.os }} / Python ${{ matrix.python-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.12"]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # No pip install step — the package has zero runtime dependencies.
+      # The whole point of the CI matrix is to prove this claim on three
+      # platforms and three Python versions.
+      - name: Verify import works with no dependencies
+        run: python -c "import arca; print('arca', arca.__version__, 'imported cleanly')"
+
+      - name: Run the test suite
+        run: python tests/run_tests.py
+
+      - name: Run the example script
+        run: python examples/example.py
+
+      - name: Run the hybrid comparison (small N for CI)
+        run: python examples/hybrid_demo.py --n 5 --chord-len 4 --seed 0
+
+      - name: Run the reference n-gram integration
+        run: python examples/integrate_reference.py --n 5 --chord-len 4 --seed 0
+
+      - name: Smoke-test the CLI
+        run: python -m arca "Cantate Domino" --json --no-files --quiet

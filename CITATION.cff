@@ -1,0 +1,34 @@
+cff-version: 1.2.0
+title: "Arca Musarithmica — an interpretable reconstruction"
+message: "If you use this software, please cite the accompanying paper."
+type: software
+version: "0.3.0"
+date-released: "2026-04-22"
+license: MIT
+repository-code: "https://github.com/rosyrosys/arca-musarithmica"
+abstract: >-
+  A rule-logged, zero-dependency reconstruction of Athanasius Kircher's
+  1650 Arca Musarithmica (Musurgia Universalis, Book VIII) operationalised
+  as a five-step, fully auditable pipeline. v0.2 adds a hybrid
+  neural-symbolic framework that uses Kircher's rule system as a
+  post-sampling projector for modern generative models; v0.3 adds
+  adapter classes for MusicGen and Hugging Face symbolic transformers.
+keywords:
+  - "music generation"
+  - "symbolic music"
+  - "explainable AI"
+  - "Kircher"
+  - "Arca Musarithmica"
+  - "rule-based composition"
+  - "hybrid neural-symbolic"
+authors:
+  - family-names: "TODO"
+    given-names: "TODO"
+preferred-citation:
+  type: article
+  title: "Analysis of harmonic structure of Athanasius Kircher's Arca Musarithmica for transparent AI music generation"
+  authors:
+    - family-names: "TODO"
+      given-names: "TODO"
+  year: 2026
+  journal: "TODO"

@@ -1,0 +1,30 @@
+# Core package: zero dependencies.
+#
+# `arca` itself runs on a clean Python 3.10+ interpreter — the five-step
+# pipeline, the CLI, the rule log, the MIDI/MusicXML writers, the
+# evaluator, the discrete-diffusion sampler, and the reference n-gram
+# are all implemented against standard-library primitives only. Install
+# with:
+#
+#     pip install -r requirements.txt
+#
+# ...will install nothing, by design. The file exists so reviewers can
+# confirm the zero-dependency claim.
+#
+# =============================================================================
+# Optional: external-model integrations (arca.integrations.*)
+# =============================================================================
+# Uncomment per-section to enable specific adapters. These libraries are
+# lazy-imported inside their loader functions, so leaving them commented
+# out does not affect the core pipeline.
+
+# --- Symbolic transformer (arca.integrations.music_transformer) --------------
+# transformers>=4.36
+# miditok>=3.0
+# torch>=2.1
+
+# --- MusicGen audio generator (arca.integrations.musicgen) -------------------
+# audiocraft>=1.3
+# basic-pitch>=0.3
+# soundfile>=0.12
+# torch>=2.1
