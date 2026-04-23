@@ -1,5 +1,7 @@
 # Arca Musarithmica — an interpretable reconstruction
 
+[![tests](https://github.com/rosyrosys/arca-musarithmica/actions/workflows/tests.yml/badge.svg)](https://github.com/rosyrosys/arca-musarithmica/actions/workflows/tests.yml)
+
 A reference implementation of Athanasius Kircher's 1650 *Arca Musarithmica*
 (from *Musurgia Universalis*, Book VIII), operationalized as a five-step,
 rule-logged pipeline. This repository accompanies the paper
